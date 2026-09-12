@@ -1,0 +1,1011 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agenda Consultas, Medicamentos e Exames</title>
+<style>
+:root{
+  --bg:#f5f7fb;--card:#fff;--text:#18212f;--muted:#6b7280;
+  --primary:#2563eb;--green:#16a34a;--red:#dc2626;--border:#e5e7eb;
+}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{background:#111827;color:#fff;padding:18px 20px;display:flex;align-items:center;justify-content:space-between}
+header h1{font-size:20px;margin:0} header small{opacity:.75}
+.wrap{max-width:1180px;margin:auto;padding:18px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px;box-shadow:0 4px 18px #0000000a}
+.kpi b{display:block;font-size:28px;margin-top:6px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+button,.btn{border:0;border-radius:10px;padding:10px 14px;cursor:pointer;font-weight:700}
+.primary{background:var(--primary);color:#fff}.secondary{background:#e5e7eb;color:#111827}.danger{background:#fee2e2;color:#991b1b}
+.tab.active{background:#111827;color:#fff}.tab{background:#e5e7eb}
+.section{display:none}.section.active{display:block}
+.form-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+label{font-size:13px;font-weight:700;display:block;margin-bottom:6px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:10px;background:#fff;font-size:14px}
+textarea{min-height:86px;resize:vertical}
+.full{grid-column:1/-1}.hidden{display:none!important}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px;border-bottom:1px solid var(--border);text-align:left}
+th{background:#f9fafb}tbody tr:nth-child(odd){background:#ffffff}tbody tr:nth-child(even){background:#dbeafe}.badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:700}
+.badge.consulta{background:#dbeafe;color:#1d4ed8}.badge.remedio{background:#dcfce7;color:#166534}.badge.ativo{background:#dcfce7;color:#166534}
+.toolbar{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+.toolbar input{max-width:330px}
+.note{font-size:13px;color:var(--muted);line-height:1.45}
+.empty{text-align:center;color:var(--muted);padding:30px}.next-list{font-size:12px;line-height:1.45;white-space:normal}
+@media(max-width:800px){.grid{grid-template-columns:1fr 1fr}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}table{font-size:12px}}
+@media(max-width:520px){.grid{grid-template-columns:1fr 1fr}.card.kpi{padding:12px}.kpi b{font-size:22px}}
+
+body.dark{--bg:#0f172a;--card:#111827;--text:#f8fafc;--muted:#cbd5e1;--border:#334155}
+body.dark header{background:#020617}
+body.dark input,body.dark select,body.dark textarea{background:#0f172a;color:#f8fafc;border-color:#475569}
+body.dark th{background:#1e293b;color:#f8fafc}
+body.dark tbody tr:nth-child(odd){background:#111827}
+body.dark tbody tr:nth-child(even){background:#243247}
+body.dark .secondary{background:#334155;color:#fff}
+body.dark .tab{background:#334155;color:#fff}
+body.dark .tab.active{background:#e2e8f0;color:#111827}
+.mode-toggle{display:flex;gap:6px}
+.mode-toggle button{padding:8px 10px}
+.cadastro-menu{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.search-main{margin:14px 0}
+.search-main input{max-width:420px}
+.history-switch{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.history-switch button.active-switch{background:#2563eb;color:#fff}
+body.dark .history-switch button.active-switch{background:#60a5fa;color:#0f172a}
+.contact-picker{border:1px solid #d1d5db;border-radius:10px;padding:9px;max-height:180px;overflow:auto;background:#fff;display:grid;gap:6px}
+.contact-option{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:8px;margin:0;font-weight:400;cursor:pointer}
+.contact-option:hover{background:#f3f4f6}.contact-option input{width:auto;margin:0}.contact-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:7px}
+body.dark .contact-picker{background:#0f172a;border-color:#475569}body.dark .contact-option:hover{background:#1e293b}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Agenda Consultas, Medicamentos e Exames</h1><small>Lembretes automáticos por WhatsApp</small></div>
+  <div class="mode-toggle">
+    <button class="secondary" onclick="setTema('light')">☀ Dia</button>
+    <button class="secondary" onclick="setTema('dark')">🌙 Noite</button>
+    <button class="secondary" onclick="exportarBackup()">Backup JSON</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <div class="card kpi"><span>Contatos</span><b id="kContatos">0</b></div>
+    <div class="card kpi"><span>Consultas</span><b id="kConsultas">0</b></div>
+    <div class="card kpi"><span>Medicamentos ativos</span><b id="kRemedios">0</b></div>
+    <div class="card kpi"><span>Exames</span><b id="kExames">0</b></div>
+    <div class="card kpi"><span>Avisos previstos</span><b id="kAvisos">0</b></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="novo">Novo aviso</button>
+    <button class="tab" data-tab="cadastro">Cadastro</button>
+  </div>
+
+  <section id="novo" class="section active">
+    <div id="novoAvisoLauncher" class="card">
+      <button class="primary" onclick="abrirNovoAviso()">+ Novo Aviso</button>
+    </div>
+    <div id="formNovoAviso" class="card hidden">
+      <h2>Novo aviso</h2>
+      <div class="form-grid">
+        <div>
+          <label>Tipo</label>
+          <select id="tipo" onchange="alternarTipo()">
+            <option value="consulta">Consulta</option>
+            <option value="remedio">Medicamento</option>
+            <option value="exame">Exame</option>
+          </select>
+        </div>
+        <div>
+          <label>Pessoa(s) para notificar</label>
+          <div id="contatosAvisoLista" class="contact-picker"></div>
+          <div class="contact-tools">
+            <button type="button" class="secondary" onclick="selecionarTodosContatos(true)">Selecionar todos</button>
+            <button type="button" class="secondary" onclick="selecionarTodosContatos(false)">Limpar</button>
+          </div>
+          <p class="note">Selecione um ou mais contatos cadastrados. Cada pessoa receberá o aviso individualmente no WhatsApp.</p>
+        </div>
+
+        <div id="consultaCampos" class="full">
+          <div class="form-grid">
+            <div><label>Especialidade</label><input id="consultaDesc" list="especialidadesLista" placeholder="Selecione ou digite a especialidade">
+              <datalist id="especialidadesLista">
+                <option value="Clínica Geral"><option value="Cardiologia"><option value="Dermatologia"><option value="Endocrinologia">
+                <option value="Gastroenterologia"><option value="Geriatria"><option value="Ginecologia"><option value="Hematologia">
+                <option value="Infectologia"><option value="Nefrologia"><option value="Neurologia"><option value="Neurologista">
+                <option value="Oftalmologia"><option value="Oncologia"><option value="Ortopedia"><option value="Otorrinolaringologia">
+                <option value="Otorrino"><option value="Pediatria"><option value="Pneumologia"><option value="Psiquiatria">
+                <option value="Reumatologia"><option value="Urologia"><option value="Angiologia"><option value="Cirurgia Vascular">
+                <option value="Cirurgia Geral"><option value="Cirurgia Plástica"><option value="Coloproctologia"><option value="Mastologia">
+                <option value="Neurocirurgia"><option value="Alergologia / Imunologia"><option value="Nutrologia"><option value="Medicina do Trabalho">
+                <option value="Fisioterapia"><option value="Psicologia"><option value="Nutrição"><option value="Odontologia"><option value="Fonoaudiologia">
+              </datalist></div>
+            <div><label>Dr.(a)</label><input id="consultaDr" placeholder="Ex.: Dra. Ana Souza"></div>
+            <div><label>Data</label><input id="consultaData" type="date"></div>
+            <div><label>Horário</label><input id="consultaHora" type="time"></div>
+            <div><label>Local</label><select id="consultaLocal"></select></div>
+            <div class="full"><label>Observação</label><textarea id="consultaObs" placeholder="Informação opcional"></textarea></div>
+          <div class="full">
+            <label>Texto do aviso</label>
+            <input id="consultaMensagem" placeholder="Ex.: Atenção, consulta em X dias.">
+          </div>
+          </div>
+          <div class="full">
+            <label>Avisar antes da consulta</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <input id="novoDiaAviso" type="number" min="0" placeholder="Ex.: 3" style="max-width:140px">
+              <select id="novaUnidadeAviso" style="max-width:160px">
+                <option value="dias">Dia(s)</option>
+                <option value="horas">Hora(s)</option>
+                <option value="minutos">Minuto(s)</option>
+              </select>
+              <button type="button" class="secondary" onclick="adicionarDiaAviso()">Adicionar aviso</button>
+            </div>
+            <div id="diasAvisoSelecionados" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
+            <p class="note">Você pode combinar avisos. Ex.: 3 dias antes, 2 horas antes e 30 minutos antes.</p>
+          </div>
+        </div>
+
+        <div id="exameCampos" class="full hidden">
+          <div class="form-grid">
+            <div><label>Exame</label><input id="exameNome" placeholder="Ex.: Hemograma, Ultrassom, Ressonância"></div>
+            <div><label>Dr(a) / Solicitante</label><input id="exameDr" placeholder="Opcional"></div>
+            <div><label>Data</label><input id="exameData" type="date"></div>
+            <div><label>Horário</label><input id="exameHora" type="time"></div>
+            <div><label>Local</label><select id="exameLocal"></select></div>
+            <div class="full"><label>Observação</label><textarea id="exameObs" placeholder="Ex.: jejum de 8 horas, levar pedido médico"></textarea></div>
+          </div>
+          <div class="full">
+            <label>Avisar antes do exame</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+              <input id="novoAvisoExameValor" type="number" min="0" placeholder="Ex.: 1" style="max-width:140px">
+              <select id="novoAvisoExameUnidade" style="max-width:160px">
+                <option value="dias">Dia(s)</option>
+                <option value="horas">Hora(s)</option>
+                <option value="minutos">Minuto(s)</option>
+              </select>
+              <button type="button" class="secondary" onclick="adicionarAvisoExame()">Adicionar aviso</button>
+            </div>
+            <div id="avisosExameSelecionados" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"></div>
+            <p class="note">Ex.: 1 dia antes e 2 horas antes.</p>
+          </div>
+        </div>
+
+        <div id="remedioCampos" class="full hidden">
+          <div class="form-grid">
+            <div><label>Medicamento</label><input id="remedioNome" placeholder="Ex.: Dipirona"></div>
+            <div><label>Dose</label><input id="remedioDose" placeholder="Ex.: 1 comprimido"></div>
+            <div><label>Data de início</label><input id="remedioInicio" type="date"></div>
+            <div><label>Horário inicial</label><input id="remedioHora" type="time"></div>
+            <div>
+              <label>Frequência</label>
+              <select id="remedioIntervalo">
+                <option value="4">A cada 4 horas</option>
+                <option value="6">A cada 6 horas</option>
+                <option value="8" selected>A cada 8 horas</option>
+                <option value="12">A cada 12 horas</option>
+                <option value="24">A cada 24 horas</option>
+              </select>
+            </div>
+            <div><label>Prazo do tratamento (dias)</label><input id="remedioDias" type="number" min="1" max="365" value="7" placeholder="Ex.: 7"></div>
+            <div>
+              <label>Quanto tempo antes avisar</label>
+              <div style="display:flex;gap:8px;align-items:center">
+                <input id="remedioAntecedenciaValor" type="number" min="0" value="0" style="max-width:120px">
+                <select id="remedioAntecedenciaUnidade">
+                  <option value="minutos">Minutos</option>
+                  <option value="horas">Horas</option>
+                  <option value="dias">Dias</option>
+                </select>
+              </div>
+            </div>
+            <div class="full">
+              <label>Texto do aviso</label>
+              <input id="remedioMensagem" placeholder="Ex.: Atenção, tomar remédio em X horas.">
+            </div>
+            <div class="full"><label>Observação</label><textarea id="remedioObs" placeholder="Ex.: após alimentação"></textarea></div>
+          </div>
+        </div>
+
+        <div class="full">
+          <button class="primary" onclick="salvarAviso()">Salvar aviso</button>
+          <button class="secondary" type="button" onclick="recolherNovoAviso()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  
+    <div class="search-main">
+      <div class="card">
+        <label>Pesquisa rápida por nome</label>
+        <input id="pesquisaRapida" placeholder="Digite o nome da pessoa..." oninput="renderConsultas();renderMedicamentos();renderExames()">
+      <div class="history-switch">
+          <button id="btnHistConsulta" class="secondary active-switch" onclick="mostrarHistorico('consulta')">Histórico Consulta</button>
+          <button id="btnHistMedicamento" class="secondary" onclick="mostrarHistorico('medicamento')">Histórico Medicamentos</button>
+          <button id="btnHistExame" class="secondary" onclick="mostrarHistorico('exame')">Histórico Exames</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="cardHistoricoConsultas" class="card" style="margin-top:14px">
+      <h2>Consultas</h2>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th>Tipo</th><th>Nome</th><th>Dr.(a)</th><th>Data</th><th>Local</th><th>Horário</th><th>Referência</th><th>Status</th><th>Ação</th></tr></thead>
+          <tbody id="tbConsultas"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="cardHistoricoMedicamentos" class="card hidden" style="margin-top:14px">
+      <h2>Medicamentos</h2>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th>Tipo</th><th>Nome</th><th>Data</th><th>Horário</th><th>Remédio</th><th>Status</th><th>Ação</th></tr></thead>
+          <tbody id="tbMedicamentos"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="cardHistoricoExames" class="card hidden" style="margin-top:14px">
+      <h2>Exames</h2>
+      <div style="overflow:auto">
+        <table>
+          <thead><tr><th>Tipo</th><th>Nome(s)</th><th>Exame</th><th>Dr(a)</th><th>Data</th><th>Local</th><th>Horário</th><th>Observação</th><th>Status</th><th>Ação</th></tr></thead>
+          <tbody id="tbExames"></tbody>
+        </table>
+      </div>
+    </div>
+</section>
+
+  <section id="cadastro" class="section">
+    <div class="card">
+      <h2>Cadastro</h2>
+      <div class="cadastro-menu">
+        <button class="secondary" onclick="mostrarCadastro('contatosCad')">Contatos</button>
+        <button class="secondary" onclick="mostrarCadastro('locaisCad')">Locais</button>
+      </div>
+      <div id="contatosCad">
+        <div class="form-grid">
+          <div><label>Nome</label><input id="contatoNome" placeholder="Ex.: José"></div>
+          <div><label>WhatsApp</label><input id="contatoFone" placeholder="Ex.: (11) 9 4567-5645"></div>
+          <div class="full"><button class="primary" onclick="salvarContato()">Adicionar contato</button></div>
+        </div>
+        <div style="overflow:auto;margin-top:16px">
+          <table><thead><tr><th>Nome</th><th>WhatsApp</th><th>Ação</th></tr></thead><tbody id="tbContatos"></tbody></table>
+        </div>
+      </div>
+      <div id="locaisCad" class="hidden">
+        <div class="form-grid">
+          <div><label>Nome do local</label><input id="localNome" placeholder="Ex.: Clínica São José"></div>
+          <div><label>Endereço / referência</label><input id="localEndereco" placeholder="Ex.: Rua X, 123"></div>
+          <div class="full"><button class="primary" onclick="salvarLocal()">Adicionar local</button></div>
+        </div>
+        <div style="overflow:auto;margin-top:16px">
+          <table><thead><tr><th>Local</th><th>Endereço</th><th>Ação</th></tr></thead><tbody id="tbLocais"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+
+const SUPABASE_URL = "https://ladcnylwglzdndkvpjsu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_Gqk-BznFvFO6SZYc4UZ-XQ_b_2lOJY9";
+
+async function sbRequest(path, options={}){
+  const headers = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + SUPABASE_KEY,
+    "Content-Type": "application/json",
+    ...(options.headers||{})
+  };
+  const res = await fetch(SUPABASE_URL + "/rest/v1/" + path, {...options, headers});
+  if(!res.ok){
+    const txt = await res.text();
+    throw new Error(txt || ("Erro Supabase " + res.status));
+  }
+  if(res.status===204) return null;
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function carregarSupabase(){
+  try{
+    const [contatos, locais, avisos, vinculos] = await Promise.all([
+      sbRequest("contatos_avisos?select=*&order=nome.asc"),
+      sbRequest("locais_avisos?select=*&order=nome.asc"),
+      sbRequest("agenda_avisos?select=*&order=created_at.desc"),
+      sbRequest("agenda_avisos_contatos?select=aviso_id,contato_id")
+    ]);
+    const contatosPorAviso={};
+    (vinculos||[]).forEach(v=>{
+      if(!contatosPorAviso[v.aviso_id]) contatosPorAviso[v.aviso_id]=[];
+      contatosPorAviso[v.aviso_id].push(v.contato_id);
+    });
+
+    db.contatos=(contatos||[]).map(c=>({
+      id:c.id,nome:c.nome,telefone:c.telefone,ativo:c.ativo
+    }));
+
+    db.locais=(locais||[]).map(l=>({
+      id:l.id,nome:l.nome,endereco:l.endereco||"",ativo:l.ativo
+    }));
+
+    db.avisos=(avisos||[]).map(a=>({
+      id:a.id,
+      tipo:a.tipo,
+      contatoId:a.contato_id,
+      contatoIds:(contatosPorAviso[a.id]&&contatosPorAviso[a.id].length)?contatosPorAviso[a.id]:(a.contato_id?[a.contato_id]:[]),
+      descricao:a.titulo||"",
+      dr:a.dr_consulta||"",
+      data:a.data_evento||"",
+      hora:(a.hora_evento||"").slice(0,5),
+      localId:a.local_id||"",
+      obs:a.observacao||"",
+      lembretesDias:Array.isArray(a.lembretes_dias)?a.lembretes_dias:[],
+      lembretesConsulta:Array.isArray(a.lembretes_consulta)?a.lembretes_consulta:
+        (Array.isArray(a.lembretes_dias)?a.lembretes_dias.map(v=>({valor:Number(v),unidade:"dias"})):[]),
+      dosesExcluidas:Array.isArray(a.doses_excluidas)?a.doses_excluidas:[],
+      mensagemAviso:a.mensagem_aviso||"",
+      nome:a.titulo||"",
+      dose:a.dose||"",
+      inicio:a.data_inicio||"",
+      dias:a.prazo_dias||1,
+      intervalo:a.intervalo_horas||24,
+      antecedenciaValor:a.antecedencia_valor||0,
+      antecedenciaUnidade:a.antecedencia_unidade||"minutos",
+      ativo:a.ativo!==false,
+      criadoEm:a.created_at
+    }));
+
+    localStorage.setItem(DBKEY,JSON.stringify(db));
+    renderTudo();
+  }catch(e){
+    console.error(e);
+    alert("Não foi possível carregar os dados do Supabase. Verifique se o SQL complementar foi executado.\n\n"+e.message);
+  }
+}
+
+async function salvarContatoSupabase(nome, telefone){
+  const r=await sbRequest("contatos_avisos", {
+    method:"POST",
+    headers:{"Prefer":"return=representation"},
+    body:JSON.stringify({nome,telefone,ativo:true})
+  });
+  return r?.[0];
+}
+
+async function salvarLocalSupabase(nome,endereco){
+  const r=await sbRequest("locais_avisos", {
+    method:"POST",
+    headers:{"Prefer":"return=representation"},
+    body:JSON.stringify({nome,endereco,ativo:true})
+  });
+  return r?.[0];
+}
+
+async function sincronizarContatosAviso(avisoId, contatoIds){
+  await sbRequest("agenda_avisos_contatos?aviso_id=eq."+encodeURIComponent(avisoId), {method:"DELETE"});
+  const ids=[...new Set((contatoIds||[]).filter(Boolean))];
+  if(ids.length){
+    await sbRequest("agenda_avisos_contatos", {
+      method:"POST",
+      headers:{"Prefer":"return=minimal"},
+      body:JSON.stringify(ids.map(contatoId=>({aviso_id:avisoId,contato_id:contatoId})))
+    });
+  }
+}
+
+async function limparPendentesAviso(avisoId){
+  if(!avisoId) return;
+  await sbRequest("envios_avisos?aviso_id=eq."+encodeURIComponent(avisoId)+"&status=eq.pendente", {method:"DELETE"});
+}
+
+async function salvarAvisoSupabase(a){
+  const contatoIds=[...new Set((a.contatoIds||[]).filter(Boolean))];
+  if(!contatoIds.length) throw new Error("Selecione pelo menos um contato.");
+
+  let payload;
+  if(a.tipo==="consulta" || a.tipo==="exame"){
+    payload={
+      tipo:a.tipo,
+      contato_id:contatoIds[0],
+      titulo:a.descricao,
+      dr_consulta:a.dr||null,
+      data_evento:a.data,
+      hora_evento:a.hora,
+      local_id:a.localId||null,
+      observacao:a.obs||null,
+      lembretes_dias:(a.lembretesConsulta||[]).filter(x=>x.unidade==="dias").map(x=>Number(x.valor)),
+      lembretes_consulta:a.lembretesConsulta||[],
+      mensagem_aviso:a.mensagemAviso||null,
+      ativo:a.ativo!==false
+    };
+  }else{
+    payload={
+      tipo:"remedio",
+      contato_id:contatoIds[0],
+      titulo:a.nome,
+      dose:a.dose||null,
+      data_inicio:a.inicio,
+      hora_evento:a.hora,
+      intervalo_horas:Number(a.intervalo||24),
+      prazo_dias:Number(a.dias||1),
+      antecedencia_valor:Number(a.antecedenciaValor||0),
+      antecedencia_unidade:a.antecedenciaUnidade||"minutos",
+      mensagem_aviso:a.mensagemAviso||null,
+      observacao:a.obs||null,
+      doses_excluidas:a.dosesExcluidas||[],
+      ativo:a.ativo!==false
+    };
+  }
+
+  let avisoId=a.id;
+  if(avisoId && String(avisoId).includes("-")){
+    await sbRequest("agenda_avisos?id=eq."+encodeURIComponent(avisoId), {
+      method:"PATCH",headers:{"Prefer":"return=representation"},body:JSON.stringify(payload)
+    });
+  }else{
+    const r=await sbRequest("agenda_avisos", {
+      method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify(payload)
+    });
+    avisoId=r?.[0]?.id;
+  }
+
+  if(!avisoId) throw new Error("Não foi possível identificar o aviso salvo.");
+  await sincronizarContatosAviso(avisoId,contatoIds);
+  await limparPendentesAviso(avisoId);
+  return avisoId;
+}
+
+async function excluirRegistroSupabase(tabela,id){
+  await sbRequest(tabela+"?id=eq."+encodeURIComponent(id), {method:"DELETE"});
+}
+
+const DBKEY="agenda_avisos_v1";
+let db=JSON.parse(localStorage.getItem(DBKEY)||'{"contatos":[],"locais":[],"avisos":[],"historico":[]}');
+if(!db.locais) db.locais=[];
+let diasAvisoConsulta=[{valor:3,unidade:"dias"},{valor:1,unidade:"dias"}];
+let lembretesExame=[{valor:1,unidade:"dias"}];
+let avisoEditandoId=null;
+
+document.querySelectorAll(".tab").forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+  btn.classList.add("active");document.getElementById(btn.dataset.tab).classList.add("active");
+});
+
+function save(){localStorage.setItem(DBKEY,JSON.stringify(db));renderTudo()}
+function id(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function normalizarFone(v){
+  let n=(v||"").replace(/\D/g,"");
+  if(n.startsWith("55") && n.length>11) n=n.slice(2);
+  return n.slice(0,11);
+}
+
+function formatarTelefone(v){
+  const n=normalizarFone(v);
+  if(!n) return "-";
+
+  if(n.length<=2) return `(${n}`;
+  const ddd=n.slice(0,2);
+  const resto=n.slice(2);
+
+  if(resto.length<=1) return `(${ddd}) ${resto}`;
+
+  // Celular brasileiro: (11) 9 4567-5645
+  if(resto.length>=9){
+    const p1=resto.slice(0,1);
+    const p2=resto.slice(1,5);
+    const p3=resto.slice(5,9);
+    return `(${ddd}) ${p1}${p2?(" "+p2):""}${p3?("-"+p3):""}`;
+  }
+
+  // Telefone fixo: (11) 3456-7890
+  if(resto.length>=8){
+    return `(${ddd}) ${resto.slice(0,4)}-${resto.slice(4,8)}`;
+  }
+
+  if(resto.length<=4) return `(${ddd}) ${resto}`;
+  return `(${ddd}) ${resto.slice(0,-4)}-${resto.slice(-4)}`;
+}
+function fmtData(v){if(!v)return"-";let [y,m,d]=v.split("-");return `${d}/${m}/${y}`}
+
+async function salvarContato(){
+  const nome=contatoNome.value.trim();
+  const telefone=normalizarFone(contatoFone.value);
+
+  if(!nome){
+    alert("Informe o nome do contato.");
+    contatoNome.focus();
+    return;
+  }
+
+  if(telefone.length!==10 && telefone.length!==11){
+    alert("Informe um WhatsApp válido com DDD. Ex.: (11) 9 4567-5645");
+    contatoFone.focus();
+    return;
+  }
+
+  const duplicado=db.contatos.some(c=>normalizarFone(c.telefone)===telefone);
+  if(duplicado){
+    alert("Este número já está cadastrado.");
+    return;
+  }
+
+  try{
+    await salvarContatoSupabase(nome,telefone);
+    contatoNome.value="";
+    contatoFone.value="";
+    await carregarSupabase();
+    alert("Contato salvo com sucesso.");
+  }catch(e){
+    console.error(e);
+    alert("Erro ao salvar contato: "+e.message);
+  }
+}
+async function excluirContato(cid){
+  if(db.avisos.some(a=>(a.contatoIds||[a.contatoId]).includes(cid))){alert("Este contato está vinculado a um aviso.");return}
+  if(!confirm("Excluir este contato?")) return;
+  try{
+    await excluirRegistroSupabase("contatos_avisos",cid);
+    await carregarSupabase();
+  }catch(e){alert("Erro ao excluir contato: "+e.message)}
+}
+
+async function salvarLocal(){
+  const nomeEl=document.getElementById("localNome");
+  const enderecoEl=document.getElementById("localEndereco");
+
+  if(!nomeEl || !enderecoEl){
+    alert("Erro interno ao localizar os campos de Local.");
+    return;
+  }
+
+  const nome=nomeEl.value.trim();
+  const endereco=enderecoEl.value.trim();
+
+  if(!nome){
+    alert("Informe o nome do local.");
+    nomeEl.focus();
+    return;
+  }
+
+  const duplicado=db.locais.some(l =>
+    (l.nome||"").trim().toLowerCase()===nome.toLowerCase()
+  );
+
+  if(duplicado){
+    alert("Este local já está cadastrado.");
+    return;
+  }
+
+  try{
+    const botao=document.querySelector('button[onclick="salvarLocal()"]');
+    if(botao){
+      botao.disabled=true;
+      botao.textContent="Salvando...";
+    }
+
+    await salvarLocalSupabase(nome,endereco);
+
+    nomeEl.value="";
+    enderecoEl.value="";
+
+    await carregarSupabase();
+    alert("Local salvo com sucesso.");
+
+    if(botao){
+      botao.disabled=false;
+      botao.textContent="Adicionar local";
+    }
+  }catch(e){
+    console.error("Erro salvarLocal:",e);
+    const botao=document.querySelector('button[onclick="salvarLocal()"]');
+    if(botao){
+      botao.disabled=false;
+      botao.textContent="Adicionar local";
+    }
+    alert("Erro ao salvar local: "+e.message);
+  }
+}
+async function excluirLocal(lid){
+  if(db.avisos.some(a=>a.localId===lid)){alert("Este local está vinculado a uma consulta.");return}
+  if(!confirm("Excluir este local?")) return;
+  try{
+    await excluirRegistroSupabase("locais_avisos",lid);
+    await carregarSupabase();
+  }catch(e){alert("Erro ao excluir local: "+e.message)}
+}
+function renderLocais(){
+  tbLocais.innerHTML=db.locais.length?db.locais.map(l=>`<tr><td>${l.nome}</td><td>${l.endereco||"-"}</td><td><button class="danger" onclick="excluirLocal('${l.id}')">Excluir</button></td></tr>`).join(""):`<tr><td colspan="3" class="empty">Nenhum local cadastrado</td></tr>`;
+  const opcoes=`<option value="">Selecione...</option>`+db.locais.map(l=>`<option value="${l.id}">${l.nome}${l.endereco?" - "+l.endereco:""}</option>`).join("");
+  consultaLocal.innerHTML=opcoes;
+  if(window.exameLocal) exameLocal.innerHTML=opcoes;
+}
+
+function alternarTipo(){
+  const t=document.getElementById("tipo").value;
+  document.getElementById("consultaCampos").classList.toggle("hidden",t!=="consulta");
+  document.getElementById("remedioCampos").classList.toggle("hidden",t!=="remedio");
+  document.getElementById("exameCampos").classList.toggle("hidden",t!=="exame");
+}
+
+
+function renderDiasAviso(){
+  const area=document.getElementById("diasAvisoSelecionados");
+  if(!area) return;
+  const itens=[...diasAvisoConsulta];
+  area.innerHTML=itens.length?itens.map((x,i)=>{
+    const valor=Number(x.valor);
+    const unidade=x.unidade||"dias";
+    let texto="";
+    if(valor===0) texto="No horário da consulta";
+    else if(unidade==="dias") texto=`${valor} dia${valor===1?"":"s"} antes`;
+    else if(unidade==="horas") texto=`${valor} hora${valor===1?"":"s"} antes`;
+    else texto=`${valor} minuto${valor===1?"":"s"} antes`;
+    return `<span class="badge consulta" style="display:flex;align-items:center;gap:7px">
+      ${texto}
+      <button type="button" onclick="removerDiaAviso(${i})" style="padding:0 5px;background:transparent;color:inherit;font-size:16px">×</button>
+    </span>`;
+  }).join(""):`<span class="note">Nenhum aviso configurado.</span>`;
+}
+
+function adicionarDiaAviso(){
+  const input=document.getElementById("novoDiaAviso");
+  const unidade=document.getElementById("novaUnidadeAviso").value;
+  const valor=Number(input.value);
+  if(input.value==="" || !Number.isInteger(valor) || valor<0){
+    alert("Informe um número inteiro igual ou maior que 0.");
+    return;
+  }
+  if(!diasAvisoConsulta.some(x=>Number(x.valor)===valor && x.unidade===unidade)){
+    diasAvisoConsulta.push({valor,unidade});
+  }
+  input.value="";
+  renderDiasAviso();
+}
+
+function removerDiaAviso(indice){
+  diasAvisoConsulta.splice(indice,1);
+  renderDiasAviso();
+}
+
+function renderAvisosExame(){
+  const area=document.getElementById("avisosExameSelecionados");
+  if(!area) return;
+  area.innerHTML=lembretesExame.length?lembretesExame.map((x,i)=>{
+    const valor=Number(x.valor), unidade=x.unidade||"dias";
+    let texto=valor===0?"No horário do exame":unidade==="dias"?`${valor} dia${valor===1?"":"s"} antes`:unidade==="horas"?`${valor} hora${valor===1?"":"s"} antes`:`${valor} minuto${valor===1?"":"s"} antes`;
+    return `<span class="badge consulta" style="display:flex;align-items:center;gap:7px">${texto}<button type="button" onclick="removerAvisoExame(${i})" style="padding:0 5px;background:transparent;color:inherit;font-size:16px">×</button></span>`;
+  }).join(""):`<span class="note">Nenhum aviso configurado.</span>`;
+}
+function adicionarAvisoExame(){
+  const input=document.getElementById("novoAvisoExameValor");
+  const unidade=document.getElementById("novoAvisoExameUnidade").value;
+  const valor=Number(input.value);
+  if(input.value==="" || !Number.isInteger(valor) || valor<0){alert("Informe um número inteiro igual ou maior que 0.");return}
+  if(!lembretesExame.some(x=>Number(x.valor)===valor && x.unidade===unidade)) lembretesExame.push({valor,unidade});
+  input.value=""; renderAvisosExame();
+}
+function removerAvisoExame(i){lembretesExame.splice(i,1);renderAvisosExame();}
+
+function getContatosSelecionados(){
+  return [...document.querySelectorAll('input[name="contatoAvisoCheck"]:checked')].map(x=>x.value);
+}
+function setContatosSelecionados(ids){
+  const set=new Set(ids||[]);
+  document.querySelectorAll('input[name="contatoAvisoCheck"]').forEach(x=>x.checked=set.has(x.value));
+}
+function selecionarTodosContatos(marcar){
+  document.querySelectorAll('input[name="contatoAvisoCheck"]').forEach(x=>x.checked=!!marcar);
+}
+function nomesContatosAviso(a){
+  const ids=a.contatoIds&&a.contatoIds.length?a.contatoIds:(a.contatoId?[a.contatoId]:[]);
+  const nomes=ids.map(cid=>db.contatos.find(c=>c.id===cid)?.nome).filter(Boolean);
+  return nomes.length?nomes.join(", "):"-";
+}
+
+async function salvarAviso(){
+  const tipo=document.getElementById("tipo").value;
+  const contatoIds=getContatosSelecionados();
+  if(!contatoIds.length){alert("Selecione pelo menos uma pessoa para receber o aviso.");return}
+
+  try{
+    if(tipo==="consulta"){
+      const descricao=consultaDesc.value.trim(), data=consultaData.value, hora=consultaHora.value, localId=consultaLocal.value;
+      if(!descricao||!data||!hora||!localId){alert("Preencha especialidade, data, horário e local.");return}
+      if(!diasAvisoConsulta.length){alert("Configure pelo menos um aviso para a consulta.");return}
+      await salvarAvisoSupabase({
+        id:avisoEditandoId,tipo,contatoIds,descricao,dr:(consultaDr?.value||"").trim(),data,hora,localId,
+        obs:consultaObs.value.trim(),lembretesConsulta:diasAvisoConsulta.map(x=>({valor:Number(x.valor),unidade:x.unidade})),
+        mensagemAviso:(consultaMensagem?.value||"").trim(),ativo:true
+      });
+      consultaDesc.value=""; if(window.consultaDr) consultaDr.value=""; consultaData.value=""; consultaHora.value=""; consultaLocal.value=""; consultaObs.value=""; if(window.consultaMensagem) consultaMensagem.value="";
+    }else if(tipo==="exame"){
+      const descricao=exameNome.value.trim(), data=exameData.value, hora=exameHora.value, localId=exameLocal.value;
+      if(!descricao||!data||!hora||!localId){alert("Preencha exame, data, horário e local.");return}
+      if(!lembretesExame.length){alert("Configure pelo menos um aviso para o exame.");return}
+      await salvarAvisoSupabase({
+        id:avisoEditandoId,tipo,contatoIds,descricao,dr:(exameDr?.value||"").trim(),data,hora,localId,
+        obs:exameObs.value.trim(),lembretesConsulta:lembretesExame.map(x=>({valor:Number(x.valor),unidade:x.unidade})),mensagemAviso:"",ativo:true
+      });
+      exameNome.value="";exameDr.value="";exameData.value="";exameHora.value="";exameLocal.value="";exameObs.value="";
+    }else{
+      const nome=remedioNome.value.trim(), inicio=remedioInicio.value, hora=remedioHora.value;
+      const intervalo=Number(remedioIntervalo.value), dias=Number(remedioDias.value);
+      if(!nome||!inicio||!hora||!dias||dias<1){alert("Preencha medicamento, início, horário e prazo do tratamento.");return}
+      const anterior=avisoEditandoId?db.avisos.find(x=>x.id===avisoEditandoId):null;
+      await salvarAvisoSupabase({
+        id:avisoEditandoId,tipo,contatoIds,nome,dose:remedioDose.value.trim(),inicio,hora,intervalo,dias,
+        antecedenciaValor:Number(remedioAntecedenciaValor.value||0),antecedenciaUnidade:remedioAntecedenciaUnidade.value,
+        mensagemAviso:(remedioMensagem.value||"").trim(),obs:remedioObs.value.trim(),dosesExcluidas:anterior?.dosesExcluidas||[],ativo:true
+      });
+      remedioNome.value="";remedioDose.value="";remedioInicio.value="";remedioHora.value="";remedioDias.value="7";remedioAntecedenciaValor.value="0";remedioMensagem.value="";remedioObs.value="";
+    }
+
+    avisoEditandoId=null;
+    selecionarTodosContatos(false);
+    await carregarSupabase();
+    recolherNovoAviso();
+    alert("Aviso salvo no Supabase.");
+  }catch(e){alert("Erro ao salvar aviso: "+e.message)}
+}
+function editarAviso(aid){
+  const a=db.avisos.find(x=>x.id===aid); if(!a) return;
+  avisoEditandoId=aid; tipo.value=a.tipo; alternarTipo(); setContatosSelecionados(a.contatoIds||[a.contatoId]);
+
+  if(a.tipo==="consulta"){
+    consultaDesc.value=a.descricao||""; consultaDr.value=a.dr||""; consultaData.value=a.data||""; consultaHora.value=a.hora||""; consultaLocal.value=a.localId||""; consultaObs.value=a.obs||""; consultaMensagem.value=a.mensagemAviso||"";
+    diasAvisoConsulta=(a.lembretesConsulta&&a.lembretesConsulta.length)?a.lembretesConsulta.map(x=>({valor:Number(x.valor),unidade:x.unidade||"dias"})):[{valor:3,unidade:"dias"},{valor:1,unidade:"dias"}]; renderDiasAviso();
+  }else if(a.tipo==="exame"){
+    exameNome.value=a.descricao||""; exameDr.value=a.dr||""; exameData.value=a.data||""; exameHora.value=a.hora||""; exameLocal.value=a.localId||""; exameObs.value=a.obs||"";
+    lembretesExame=(a.lembretesConsulta&&a.lembretesConsulta.length)?a.lembretesConsulta.map(x=>({valor:Number(x.valor),unidade:x.unidade||"dias"})):[{valor:1,unidade:"dias"}]; renderAvisosExame();
+  }else{
+    remedioNome.value=a.nome||""; remedioDose.value=a.dose||""; remedioInicio.value=(a.inicio||"").slice(0,10); remedioHora.value=(a.hora||"").slice(0,5); remedioIntervalo.value=String(a.intervalo||24); remedioDias.value=String(a.dias||1); remedioAntecedenciaValor.value=String(a.antecedenciaValor||0); remedioAntecedenciaUnidade.value=a.antecedenciaUnidade||"minutos"; remedioMensagem.value=a.mensagemAviso||""; remedioObs.value=a.obs||"";
+  }
+  document.querySelector('[data-tab="novo"]').click(); abrirNovoAviso(); window.scrollTo({top:0,behavior:"smooth"});
+}
+
+async function excluirAviso(aid){
+  if(!confirm("Excluir este aviso?")) return;
+  try{
+    await excluirRegistroSupabase("agenda_avisos",aid);
+    await carregarSupabase();
+  }catch(e){alert("Erro ao excluir aviso: "+e.message)}
+}
+async function excluirDose(aid,indice){
+  const a=db.avisos.find(x=>x.id===aid);
+  if(!a) return;
+  const escolha=confirm("Deseja excluir somente este horário?\n\nOK = somente este\nCancelar = escolher excluir todos");
+  if(escolha){
+    try{
+      const lista=[...(a.dosesExcluidas||[])];
+      if(!lista.includes(indice)) lista.push(indice);
+      await sbRequest("agenda_avisos?id=eq."+encodeURIComponent(aid),{
+        method:"PATCH",
+        headers:{"Prefer":"return=representation"},
+        body:JSON.stringify({doses_excluidas:lista})
+      });
+      await limparPendentesAviso(aid);
+      await carregarSupabase();
+    }catch(e){alert("Erro ao excluir este horário: "+e.message)}
+  }else{
+    if(confirm("Excluir TODO o tratamento e todos os horários?")){
+      await excluirAviso(aid);
+    }
+  }
+}
+
+function toggleAviso(aid){let a=db.avisos.find(x=>x.id===aid);if(a){a.ativo=!a.ativo;save()}}
+
+function renderContatos(){
+  const tb=document.getElementById("tbContatos");
+  tb.innerHTML=db.contatos.length?db.contatos.map(c=>`<tr><td>${c.nome}</td><td>${formatarTelefone(c.telefone)}</td><td><button class="danger" onclick="excluirContato('${c.id}')">Excluir</button></td></tr>`).join(""):`<tr><td colspan="3" class="empty">Nenhum contato cadastrado</td></tr>`;
+  const lista=document.getElementById("contatosAvisoLista");
+  if(lista){
+    const selecionados=new Set(getContatosSelecionados());
+    lista.innerHTML=db.contatos.length?db.contatos.map(c=>`<label class="contact-option"><input type="checkbox" name="contatoAvisoCheck" value="${c.id}" ${selecionados.has(c.id)?"checked":""}><span><b>${c.nome}</b><br><small>${formatarTelefone(c.telefone)}</small></span></label>`).join(""):`<span class="note">Cadastre pelo menos um contato.</span>`;
+  }
+}
+
+
+
+function calcularAvisosPrevistos(){
+  let total=0;
+  db.avisos.filter(a=>a.ativo).forEach(a=>{
+    const qtdContatos=Math.max(1,(a.contatoIds||[]).length);
+    if(a.tipo==="consulta" || a.tipo==="exame") total+=(Array.isArray(a.lembretesConsulta)?a.lembretesConsulta.length:1)*qtdContatos;
+    else total+=Math.ceil((Number(a.dias||1)*24)/Number(a.intervalo||8))*qtdContatos;
+  });
+  return total;
+}
+
+function abrirNovoAviso(){
+  novoAvisoLauncher.classList.add("hidden");
+  formNovoAviso.classList.remove("hidden");
+}
+function recolherNovoAviso(){
+  formNovoAviso.classList.add("hidden");
+  novoAvisoLauncher.classList.remove("hidden");
+}
+function preencherFiltrosPessoas(){}
+function gerarDoses(a){
+  const data=(a.inicio||"").slice(0,10);
+  const hora=(a.hora||"00:00").slice(0,5);
+
+  if(!data){
+    return [];
+  }
+
+  const inicio=new Date(`${data}T${hora}:00`);
+  if(Number.isNaN(inicio.getTime())){
+    console.warn("Data/hora inválida do medicamento:", a);
+    return [];
+  }
+
+  const intervalo=Number(a.intervalo||8);
+  const dias=Number(a.dias||1);
+
+  if(!intervalo || intervalo<=0 || !dias || dias<=0){
+    return [];
+  }
+
+  const total=Math.ceil((dias*24)/intervalo);
+  const doses=[];
+
+  for(let i=0;i<total;i++){
+    doses.push(new Date(inicio.getTime()+i*intervalo*3600000));
+  }
+
+  return doses;
+}
+
+function renderConsultas(){
+  const q=(document.getElementById("pesquisaRapida")?.value||"").toLowerCase().trim();
+  const arr=db.avisos.filter(a=>a.tipo==="consulta").filter(a=>{
+    return !q || nomesContatosAviso(a).toLowerCase().includes(q);
+  }).sort((a,b)=>(b.data+b.hora).localeCompare(a.data+a.hora));
+  tbConsultas.innerHTML=arr.length?arr.map(a=>{
+    const l=db.locais.find(x=>x.id===a.localId)||{};
+    const horaConsulta=(a.hora||"00:00").slice(0,5); const concluido=new Date(`${(a.data||"").slice(0,10)}T${horaConsulta}:00`)<new Date();
+    return `<tr>
+      <td>Consulta</td>
+      <td>${nomesContatosAviso(a)}</td>
+      <td>${a.dr||"-"}</td>
+      <td>${fmtData(a.data)}</td>
+      <td>${l.nome||"-"}</td>
+      <td>${a.hora||"-"}</td>
+      <td>${a.obs||"-"}</td>
+      <td><span class="badge ${concluido?"ativo":"consulta"}">${concluido?"Concluído":"Agendado"}</span></td>
+      <td><button class="secondary" onclick="editarAviso('${a.id}');abrirNovoAviso()">Editar</button>
+      <button class="danger" onclick="excluirAviso('${a.id}')">Excluir</button></td>
+    </tr>`;
+  }).join(""):`<tr><td colspan="9" class="empty">Nenhuma consulta cadastrada</td></tr>`;
+}
+
+function renderMedicamentos(){
+  const q=(document.getElementById("pesquisaRapida")?.value||"").toLowerCase().trim();
+  const tratamentos=db.avisos.filter(a=>a.tipo==="remedio").filter(a=>{
+    return !q || nomesContatosAviso(a).toLowerCase().includes(q);
+  });
+  const linhas=[];
+  tratamentos.forEach(a=>{
+    const doses=gerarDoses(a);
+    const excluidas=a.dosesExcluidas||[];
+    doses.forEach((d,i)=>{
+      if(excluidas.includes(i)) return;
+      const concluido=d<new Date();
+      linhas.push({ordem:d.getTime(),html:`<tr>
+        <td>Medicamento</td>
+        <td>${nomesContatosAviso(a)}</td>
+        <td>${d.toLocaleDateString("pt-BR")}</td>
+        <td>${d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}</td>
+        <td>${a.nome||"-"}${a.dose?` - ${a.dose}`:""}</td>
+        <td><span class="badge ${concluido?"ativo":"remedio"}">${concluido?"Concluído":"Pendente"}</span></td>
+        <td style="white-space:nowrap">
+          <button class="secondary" onclick="editarAviso('${a.id}')">Editar</button>
+          <button class="danger" onclick="excluirDose('${a.id}',${i})">Excluir</button>
+        </td>
+      </tr>`});
+    });
+  });
+  linhas.sort((a,b)=>a.ordem-b.ordem);
+  tbMedicamentos.innerHTML=linhas.length?linhas.map(x=>x.html).join(""):`<tr><td colspan="7" class="empty">Nenhum medicamento cadastrado</td></tr>`;
+}
+
+
+function renderExames(){
+  const q=(document.getElementById("pesquisaRapida")?.value||"").toLowerCase().trim();
+  const arr=db.avisos.filter(a=>a.tipo==="exame").filter(a=>!q || nomesContatosAviso(a).toLowerCase().includes(q)).sort((a,b)=>(b.data+b.hora).localeCompare(a.data+a.hora));
+  tbExames.innerHTML=arr.length?arr.map(a=>{
+    const l=db.locais.find(x=>x.id===a.localId)||{};
+    const h=(a.hora||"00:00").slice(0,5); const concluido=new Date(`${(a.data||"").slice(0,10)}T${h}:00`)<new Date();
+    return `<tr><td>Exame</td><td>${nomesContatosAviso(a)}</td><td>${a.descricao||"-"}</td><td>${a.dr||"-"}</td><td>${fmtData(a.data)}</td><td>${l.nome||"-"}</td><td>${a.hora||"-"}</td><td>${a.obs||"-"}</td><td><span class="badge ${concluido?"ativo":"consulta"}">${concluido?"Concluído":"Agendado"}</span></td><td><button class="secondary" onclick="editarAviso('${a.id}')">Editar</button> <button class="danger" onclick="excluirAviso('${a.id}')">Excluir</button></td></tr>`;
+  }).join(""):`<tr><td colspan="10" class="empty">Nenhum exame cadastrado</td></tr>`;
+}
+
+function renderTudo(){
+  kContatos.textContent=db.contatos.length;
+  kConsultas.textContent=db.avisos.filter(a=>a.tipo==="consulta"&&a.ativo).length;
+  kRemedios.textContent=db.avisos.filter(a=>a.tipo==="remedio"&&a.ativo).length;
+  kExames.textContent=db.avisos.filter(a=>a.tipo==="exame"&&a.ativo).length;
+  kAvisos.textContent=calcularAvisosPrevistos();
+  renderContatos();renderLocais();renderConsultas();renderMedicamentos();renderExames();
+}
+
+
+function carregarFrequencias(){
+  let freqs=JSON.parse(localStorage.getItem("agenda_frequencias")||"null");
+  if(!Array.isArray(freqs)||!freqs.length){
+    freqs=[
+      {label:"1 por dia",horas:24},
+      {label:"De 12 em 12 horas",horas:12},
+      {label:"De 8 em 8 horas",horas:8},
+      {label:"De 6 em 6 horas",horas:6},
+      {label:"De 4 em 4 horas",horas:4}
+    ];
+    localStorage.setItem("agenda_frequencias",JSON.stringify(freqs));
+  }
+  const sel=document.getElementById("remedioIntervalo");
+  if(sel){
+    sel.innerHTML=freqs.map(f=>`<option value="${f.horas}">${f.label}</option>`).join("");
+  }
+}
+function cadastrarFrequencia(){
+  const label=prompt("Nome da frequência. Ex.: 2 vezes ao dia");
+  if(!label) return;
+  const horas=Number(prompt("Intervalo em horas. Ex.: 12"));
+  if(!horas||horas<=0){alert("Informe um intervalo válido em horas.");return}
+  const freqs=JSON.parse(localStorage.getItem("agenda_frequencias")||"[]");
+  freqs.push({label,horas});
+  localStorage.setItem("agenda_frequencias",JSON.stringify(freqs));
+  carregarFrequencias();
+  remedioIntervalo.value=String(horas);
+}
+function mostrarHistorico(tipo){
+  cardHistoricoConsultas.classList.toggle("hidden",tipo!=="consulta");
+  cardHistoricoMedicamentos.classList.toggle("hidden",tipo!=="medicamento");
+  cardHistoricoExames.classList.toggle("hidden",tipo!=="exame");
+  btnHistConsulta.classList.toggle("active-switch",tipo==="consulta");
+  btnHistMedicamento.classList.toggle("active-switch",tipo==="medicamento");
+  btnHistExame.classList.toggle("active-switch",tipo==="exame");
+}
+function setTema(modo){
+  document.body.classList.toggle("dark",modo==="dark");
+  localStorage.setItem("agenda_tema",modo);
+}
+function mostrarCadastro(id){
+  document.getElementById("contatosCad").classList.toggle("hidden",id!=="contatosCad");
+  document.getElementById("locaisCad").classList.toggle("hidden",id!=="locaisCad");
+}
+function exportarBackup(){
+  let blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"});
+  let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="agenda_avisos_backup.json";a.click();URL.revokeObjectURL(a.href);
+}
+
+carregarFrequencias();
+alternarTipo();
+renderDiasAviso();
+renderAvisosExame();
+renderTudo();
+recolherNovoAviso();
+mostrarHistorico("consulta");
+setTema(localStorage.getItem("agenda_tema")||"light");
+
+if(window.contatoFone){
+  contatoFone.addEventListener("input",()=>{
+    const pos=contatoFone.selectionStart;
+    contatoFone.value=formatarTelefone(contatoFone.value);
+  });
+}
+
+carregarSupabase();
+</script>
+</body>
+</html>
