@@ -402,11 +402,6 @@ body.dark .icon-btn.delete{background:#4c1d2a;color:#fecdd3}
         <label>Pesquisa rápida por nome</label>
         <input id="pesquisaRapida" placeholder="Digite o nome da pessoa..." oninput="renderConsultas();renderMedicamentos();renderExames()">
         <div class="history-title">Histórico</div>
-        <div class="history-switch">
-          <button id="btnHistConsulta" class="secondary active-switch" onclick="mostrarHistorico('consulta')">Consulta</button>
-          <button id="btnHistMedicamento" class="secondary" onclick="mostrarHistorico('medicamento')">Medicamentos</button>
-          <button id="btnHistExame" class="secondary" onclick="mostrarHistorico('exame')">Exames</button>
-        </div>
         <div class="status-slicer" aria-label="Filtro por status">
           <span class="slicer-label">Status:</span>
           <button id="btnStatusAgendado" class="status-chip agendado" type="button" onclick="filtrarStatusHistorico('agendado')">Agendado</button>
@@ -1483,9 +1478,6 @@ function mostrarHistorico(tipo){
   cardHistoricoConsultas.classList.toggle("hidden",tipo!=="consulta");
   cardHistoricoMedicamentos.classList.toggle("hidden",tipo!=="medicamento");
   cardHistoricoExames.classList.toggle("hidden",tipo!=="exame");
-  btnHistConsulta.classList.toggle("active-switch",tipo==="consulta");
-  btnHistMedicamento.classList.toggle("active-switch",tipo==="medicamento");
-  btnHistExame.classList.toggle("active-switch",tipo==="exame");
   atualizarBotoesStatus();
 }
 function setTema(modo){
