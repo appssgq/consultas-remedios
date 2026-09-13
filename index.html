@@ -74,7 +74,7 @@ header{
 .catalog-toolbar .catalog-buttons{display:flex;gap:7px}
 body.dark .mini-action{background:#334155;color:#fff}
 body.dark .mini-action:hover{background:#475569}
-.kpi-contatos{background:linear-gradient(135deg,#0284c7,#38bdf8)}
+.kpi-medicamentos{background:linear-gradient(135deg,#ea580c,#fb923c)}
 .kpi-consultas{background:linear-gradient(135deg,#059669,#34d399)}
 .kpi-exames{background:linear-gradient(135deg,#7c3aed,#a78bfa)}
 .card.kpi{cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
@@ -252,7 +252,7 @@ body.dark .icon-btn.delete{background:#4c1d2a;color:#fecdd3}
 
 <div class="wrap">
   <div class="grid kpi-grid">
-    <div class="card kpi kpi-contatos" role="button" tabindex="0" onclick="filtrarPorCartao('contatos')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorCartao('contatos')}" title="Abrir contatos"><div class="kpi-icon">👥</div><div class="kpi-info"><span>Contatos</span><b id="kContatos">0</b></div></div>
+    <div class="card kpi kpi-medicamentos" role="button" tabindex="0" onclick="filtrarPorCartao('medicamento')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorCartao('medicamento')}" title="Filtrar histórico de medicamentos"><div class="kpi-icon">💊</div><div class="kpi-info"><span>Medicamentos</span><b id="kMedicamentos">0</b></div></div>
     <div class="card kpi kpi-consultas" role="button" tabindex="0" onclick="filtrarPorCartao('consulta')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorCartao('consulta')}" title="Filtrar histórico de consultas"><div class="kpi-icon">🩺</div><div class="kpi-info"><span>Consultas</span><b id="kConsultas">0</b></div></div>
     <div class="card kpi kpi-exames" role="button" tabindex="0" onclick="filtrarPorCartao('exame')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filtrarPorCartao('exame')}" title="Filtrar histórico de exames"><div class="kpi-icon">🧪</div><div class="kpi-info"><span>Exames</span><b id="kExames">0</b></div></div>
   </div>
@@ -1439,7 +1439,7 @@ function renderExames(){
   }).join(""):`<tr><td colspan="9" class="empty">Nenhum exame encontrado para este filtro</td></tr>`;
 }
 function renderTudo(){
-  kContatos.textContent=db.contatos.length;
+  kMedicamentos.textContent=db.avisos.filter(a=>a.tipo==="remedio"&&a.ativo).length;
   kConsultas.textContent=db.avisos.filter(a=>a.tipo==="consulta"&&a.ativo).length;
   kExames.textContent=db.avisos.filter(a=>a.tipo==="exame"&&a.ativo).length;
   renderContatos();renderLocais();renderCatalogos();renderConsultas();renderMedicamentos();renderExames();
