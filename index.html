@@ -1439,7 +1439,11 @@ function renderExames(){
   }).join(""):`<tr><td colspan="9" class="empty">Nenhum exame encontrado para este filtro</td></tr>`;
 }
 function renderTudo(){
-  kMedicamentos.textContent=db.avisos.filter(a=>a.tipo==="remedio"&&a.ativo).length;
+  kMedicamentos.textContent=db.avisos.filter(a=>{
+    if(a.tipo!=="remedio" || a.ativo===false) return false;
+    const excluidas=a.dosesExcluidas||[];
+    return gerarDoses(a).some((d,i)=>!excluidas.includes(i) && d>=new Date());
+  }).length;
   kConsultas.textContent=db.avisos.filter(a=>a.tipo==="consulta"&&a.ativo).length;
   kExames.textContent=db.avisos.filter(a=>a.tipo==="exame"&&a.ativo).length;
   renderContatos();renderLocais();renderCatalogos();renderConsultas();renderMedicamentos();renderExames();
